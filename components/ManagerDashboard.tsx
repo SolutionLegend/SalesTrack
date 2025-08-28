@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, useLocalStorage } from '../context/AppContext';
 import { Sale, SaleItem } from '../types';
 import StatCard from './ui/StatCard';
 import SalesChart from './SalesChart';
@@ -210,28 +210,6 @@ const ManagerDashboard: React.FC = () => {
             daysRemaining: Math.max(0, daysRemaining),
         };
     }, [goal, stats.totalRevenue]);
-
-    function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
-        const [storedValue, setStoredValue] = useState<T>(() => {
-            try {
-                const item = window.localStorage.getItem(key);
-                return item ? JSON.parse(item) : initialValue;
-            } catch (error) {
-                console.error(error);
-                return initialValue;
-            }
-        });
-        const setValue = (value: T | ((val: T) => T)) => {
-            try {
-                const valueToStore = value instanceof Function ? value(storedValue) : value;
-                setStoredValue(valueToStore);
-                window.localStorage.setItem(key, JSON.stringify(valueToStore));
-            } catch (error) {
-                console.error(error);
-            }
-        };
-        return [storedValue, setValue];
-    }
 
     return (
         <div className="space-y-8">
