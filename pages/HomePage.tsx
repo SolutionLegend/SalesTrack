@@ -41,7 +41,7 @@ const HomePage: React.FC = () => {
             <section className="py-20">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl font-bold dark:text-white">Why SalesTrack?</h2>
+                        <h2 className="text-3xl font-bold dark:text-white">Why Sales Tracker?</h2>
                         <p className="text-gray-500 dark:text-gray-400 mt-2">Everything you need in a modern sales tracker.</p>
                     </div>
                     <div className="flex flex-wrap -mx-4">

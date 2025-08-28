@@ -17,7 +17,7 @@ const Navbar: React.FC = () => {
             <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
                 <Link to="/" className="flex items-center space-x-3 rtl:space-x-reverse">
                     <ChartBarIcon className="h-8 text-blue-500" />
-                    <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">SalesTrack</span>
+                    <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Sales Tracker</span>
                 </Link>
                 <div className="flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
                     {isAuthenticated ? (
@@ -45,7 +45,7 @@ const Footer: React.FC = () => {
         <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
             <div className="mx-auto w-full max-w-screen-xl p-4 py-6 lg:py-8">
                 <div className="sm:flex sm:items-center sm:justify-between">
-                    <span className="text-sm text-gray-500 sm:text-center dark:text-gray-400">© 2024 <a href="#" className="hover:underline">SalesTrack™</a>. All Rights Reserved.
+                    <span className="text-sm text-gray-500 sm:text-center dark:text-gray-400">© 2024 <a href="#" className="hover:underline">Sales Tracker™</a>. All Rights Reserved.
                     </span>
                     <div className="flex mt-4 sm:justify-center sm:mt-0">
                         {/* Social icons can go here */}

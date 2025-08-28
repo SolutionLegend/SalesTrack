@@ -59,7 +59,7 @@ Discount: $0.00
 Tax: $0.00
 TOTAL: $${sale.totalAmount.toFixed(2)}
 ----------------------------------
-SalesTrack - Your reliable sales partner.
+Sales Tracker - Your reliable sales partner.
         `;
     }
 
@@ -120,7 +120,7 @@ SalesTrack - Your reliable sales partner.
                             <div className="flex items-center space-x-3">
                                 <ChartBarIcon className="h-10 w-10 text-blue-500" />
                                 <div>
-                                    <h1 className="text-2xl font-bold">SalesTrack</h1>
+                                    <h1 className="text-2xl font-bold">Sales Tracker</h1>
                                     <p className="text-sm text-gray-500 dark:text-gray-400">Your Trusted Sales Partner</p>
                                 </div>
                             </div>
