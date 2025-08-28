@@ -86,6 +86,15 @@ export const TrendingUpIcon: React.FC<IconProps> = ({ className }) => (
     </svg>
 );
 
+// FIX: Add missing TargetIcon component.
+export const TargetIcon: React.FC<IconProps> = ({ className }) => (
+    <svg className={className} stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10"></circle>
+        <circle cx="12" cy="12" r="6"></circle>
+        <circle cx="12" cy="12" r="2"></circle>
+    </svg>
+);
+
 export const PrintIcon: React.FC<IconProps> = ({ className }) => (
     <svg className={className} stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
         <path d="M6 9V2h12v7"></path>
