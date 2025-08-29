@@ -54,6 +54,8 @@ interface IPwaContext {
   installPrompt: any;
   isOnline: boolean;
   handleInstallClick: () => void;
+  isInstallModalVisible: boolean;
+  dismissInstallModal: () => void;
 }
 
 // --- Context Creation ---
@@ -67,6 +69,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [theme, setTheme] = useLocalStorage<Theme>('theme', 'light');
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isInstallModalVisible, setIsInstallModalVisible] = useState(false);
 
 
   useEffect(() => {
@@ -83,11 +86,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setInstallPrompt(e);
+      
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+      const promptShown = sessionStorage.getItem('pwaInstallPromptShown');
+
+      if (!isStandalone && !promptShown) {
+        setTimeout(() => {
+            setIsInstallModalVisible(true);
+        }, 3000); // Show after 3 seconds
+      }
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     const handleAppInstalled = () => {
       setInstallPrompt(null);
+      setIsInstallModalVisible(false);
     };
     window.addEventListener('appinstalled', handleAppInstalled);
 
@@ -107,8 +120,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 console.log('User dismissed the A2HS prompt');
             }
             setInstallPrompt(null);
+            setIsInstallModalVisible(false);
         });
     }
+  };
+
+  const dismissInstallModal = () => {
+      setIsInstallModalVisible(false);
+      sessionStorage.setItem('pwaInstallPromptShown', 'true');
   };
 
   // Online status
@@ -210,6 +229,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     installPrompt,
     isOnline,
     handleInstallClick,
+    isInstallModalVisible,
+    dismissInstallModal,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
 import { LogoIcon, LogoutIcon, MoonIcon, SunIcon, InstallIcon } from './components/ui/Icons';
+import PwaInstallModal from './components/PwaInstallModal';
 
 // --- Layout Components ---
 
@@ -124,7 +125,18 @@ function App() {
 
 // A wrapper component is needed because Navbar uses useAppContext, which needs to be inside the provider.
 const NavbarWrapper: React.FC = () => {
-    return <Navbar />;
+    const { isInstallModalVisible, handleInstallClick, dismissInstallModal } = useAppContext();
+    return (
+        <>
+            <Navbar />
+            {isInstallModalVisible && (
+                <PwaInstallModal
+                    onInstall={handleInstallClick}
+                    onDismiss={dismissInstallModal}
+                />
+            )}
+        </>
+    );
 };
 
 export default App;
