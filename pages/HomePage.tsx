@@ -31,8 +31,8 @@ const HomePage: React.FC = () => {
                             Login
                         </Link>
                     </div>
-                    <div className="hidden lg:mt-0 lg:col-span-5 lg:flex">
-                        <img src="https://picsum.photos/id/10/500/500" alt="mockup" className="rounded-lg shadow-xl"/>
+                    <div className="hidden lg:mt-0 lg:col-span-5 lg:flex items-center justify-center">
+                        <img src="/hero-banner.svg" alt="Sales Tracker Dashboard Mockup" />
                     </div>
                 </div>
             </section>

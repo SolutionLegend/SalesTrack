@@ -1,14 +1,17 @@
-const CACHE_NAME = 'sales-tracker-cache-v1';
+const CACHE_NAME = 'sales-tracker-cache-v2';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
+  '/manifest.json',
+  '/icon-192.svg',
+  '/icon-512.svg',
+  '/hero-banner.svg',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/react@18/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
   'https://unpkg.com/recharts@2.12.7/umd/Recharts.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
-  'https://picsum.photos/id/10/500/500' 
 ];
 
 self.addEventListener('install', event => {

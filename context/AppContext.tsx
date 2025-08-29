@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { User, Role, Sale, SaleItem } from '../types';
 
@@ -29,6 +28,13 @@ export function useLocalStorage<T,>(key: string, initialValue: T): [T, React.Dis
 
 
 // --- App Context Interfaces ---
+type Theme = 'light' | 'dark';
+
+interface IThemeContext {
+  theme: Theme;
+  toggleTheme: () => void;
+}
+
 interface IAuthContext {
   currentUser: User | null;
   isAuthenticated: boolean;
@@ -44,14 +50,82 @@ interface ISalesContext {
   exportSales: () => string;
 }
 
+interface IPwaContext {
+  installPrompt: any;
+  isOnline: boolean;
+  handleInstallClick: () => void;
+}
+
 // --- Context Creation ---
-const AppContext = createContext<IAuthContext & ISalesContext | undefined>(undefined);
+const AppContext = createContext<IAuthContext & ISalesContext & IThemeContext & IPwaContext | undefined>(undefined);
 
 // --- Provider Component ---
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [users, setUsers] = useLocalStorage<User[]>('users', []);
   const [sales, setSales] = useLocalStorage<Sale[]>('sales', []);
   const [currentUser, setCurrentUser] = useLocalStorage<User | null>('currentUser', null);
+  const [theme, setTheme] = useLocalStorage<Theme>('theme', 'light');
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [theme]);
+
+    // PWA Install prompt
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    const handleAppInstalled = () => {
+      setInstallPrompt(null);
+    };
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = () => {
+    if (installPrompt) {
+        installPrompt.prompt();
+        installPrompt.userChoice.then((choiceResult: { outcome: string }) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the A2HS prompt');
+            } else {
+                console.log('User dismissed the A2HS prompt');
+            }
+            setInstallPrompt(null);
+        });
+    }
+  };
+
+  // Online status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  }, [setTheme]);
 
   const isAuthenticated = !!currentUser;
 
@@ -131,6 +205,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     addSale,
     importSales,
     exportSales,
+    theme,
+    toggleTheme,
+    installPrompt,
+    isOnline,
+    handleInstallClick,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
