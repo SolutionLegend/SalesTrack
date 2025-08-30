@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { Sale } from '../types';
 import { ChartBarIcon, PrintIcon } from './ui/Icons';
+import { useAppContext } from '../context/AppContext';
 
 // Declare external libraries to prevent TypeScript errors
 declare const jspdf: any;
@@ -13,6 +14,7 @@ interface ReceiptModalProps {
 
 const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, onClose }) => {
     const receiptRef = useRef<HTMLDivElement>(null);
+    const { isOnline } = useAppContext();
 
     const handleDownloadPdf = () => {
         const input = receiptRef.current;
@@ -208,7 +210,12 @@ Sales Tracker - Your reliable sales partner.
                     <button onClick={handlePrint} className="px-4 py-2 text-sm font-medium text-white bg-gray-500 rounded-md hover:bg-gray-600 flex items-center">
                        <PrintIcon className="w-4 h-4 mr-2" /> Print
                     </button>
-                    <button onClick={handleEmailReceipt} className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700">
+                    <button 
+                        onClick={handleEmailReceipt} 
+                        disabled={!isOnline}
+                        title={!isOnline ? "An internet connection is required to email a receipt." : "Email Receipt"}
+                        className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed dark:disabled:bg-gray-600"
+                    >
                         Email Receipt
                     </button>
                     <button onClick={handleDownloadPdf} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">

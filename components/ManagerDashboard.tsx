@@ -3,7 +3,7 @@ import { useAppContext, useLocalStorage } from '../context/AppContext';
 import { Sale, SaleItem } from '../types';
 import StatCard from './ui/StatCard';
 import SalesChart from './SalesChart';
-import { DollarSignIcon, ShoppingCartIcon, UsersIcon, FileTextIcon, AlertTriangleIcon, TrendingUpIcon, TargetIcon } from './ui/Icons';
+import { DollarSignIcon, ShoppingCartIcon, UsersIcon, FileTextIcon, AlertTriangleIcon, TrendingUpIcon, TargetIcon, SpinnerIcon } from './ui/Icons';
 import ReceiptModal from './ReceiptModal';
 import ExportModal from './ExportModal';
 
@@ -32,6 +32,7 @@ const ManagerDashboard: React.FC = () => {
     const [goalAmount, setGoalAmount] = useState('');
     const [goalDate, setGoalDate] = useState('');
     const [isEditingGoal, setIsEditingGoal] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
 
 
     const stats = useMemo(() => {
@@ -110,81 +111,86 @@ const ManagerDashboard: React.FC = () => {
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                const text = e.target?.result as string;
-                let successfulImports = 0;
-                let failedImports = 0;
-                const parsedSales: Sale[] = [];
-
-                try {
-                    const lines = text.split('\n');
-                    if (lines.length < 2) {
-                        alert("Invalid CSV: Not enough data.");
-                        return;
-                    }
-                    const headerLine = lines[0].trim();
-                    const headers = headerLine.split(',');
-                    const rows = lines.slice(1);
-                    
-                    rows.forEach(row => {
-                         if (row.trim() === '') return;
-                         try {
-                            const regex = /("([^"]|"")*"|[^,]*),/g;
-                            const values: string[] = [];
-                            let match;
-                            while ((match = regex.exec(row + ','))) {
-                                let value = match[1];
-                                if (value.startsWith('"') && value.endsWith('"')) {
-                                    value = value.slice(1, -1).replace(/""/g, '"');
+                setIsImporting(true);
+                // Use timeout to allow UI update before heavy processing
+                setTimeout(() => {
+                    let successfulImports = 0;
+                    let failedImports = 0;
+                    const parsedSales: Sale[] = [];
+                    try {
+                        const text = e.target?.result as string;
+                        
+                        const lines = text.split('\n');
+                        if (lines.length < 2) {
+                            alert("Invalid CSV: Not enough data.");
+                            return;
+                        }
+                        const headerLine = lines[0].trim();
+                        const headers = headerLine.split(',');
+                        const rows = lines.slice(1);
+                        
+                        rows.forEach(row => {
+                             if (row.trim() === '') return;
+                             try {
+                                const regex = /("([^"]|"")*"|[^,]*),/g;
+                                const values: string[] = [];
+                                let match;
+                                while ((match = regex.exec(row + ','))) {
+                                    let value = match[1];
+                                    if (value.startsWith('"') && value.endsWith('"')) {
+                                        value = value.slice(1, -1).replace(/""/g, '"');
+                                    }
+                                    values.push(value);
                                 }
-                                values.push(value);
-                            }
 
-                            const rowData = headers.reduce((obj, header, index) => {
-                                obj[header] = values[index];
-                                return obj;
-                            }, {} as {[key: string]: any});
+                                const rowData = headers.reduce((obj, header, index) => {
+                                    obj[header] = values[index];
+                                    return obj;
+                                }, {} as {[key: string]: any});
 
-                            if (!rowData.id || !rowData.items || !rowData.totalAmount || !rowData.customerName || !rowData.paymentMethod) {
-                                throw new Error("Missing required fields");
-                            }
+                                if (!rowData.id || !rowData.items || !rowData.totalAmount || !rowData.customerName || !rowData.paymentMethod) {
+                                    throw new Error("Missing required fields");
+                                }
 
-                            const items: SaleItem[] = JSON.parse(rowData.items);
+                                const items: SaleItem[] = JSON.parse(rowData.items);
 
-                            parsedSales.push({ 
-                                id: rowData.id,
-                                items,
-                                totalAmount: parseFloat(rowData.totalAmount),
-                                date: rowData.date,
-                                staffId: rowData.staffId,
-                                staffEmail: rowData.staffEmail,
-                                customerName: rowData.customerName,
-                                customerPhone: rowData.customerPhone,
-                                paymentMethod: rowData.paymentMethod as 'Cash' | 'Card' | 'Online',
-                             });
-                             successfulImports++;
-                         } catch (rowError) {
-                            console.error("Error parsing row:", row, rowError);
-                            failedImports++;
-                         }
-                    });
-                    
-                    if (parsedSales.length > 0) {
-                        importSales(parsedSales);
+                                parsedSales.push({ 
+                                    id: rowData.id,
+                                    items,
+                                    totalAmount: parseFloat(rowData.totalAmount),
+                                    date: rowData.date,
+                                    staffId: rowData.staffId,
+                                    staffEmail: rowData.staffEmail,
+                                    customerName: rowData.customerName,
+                                    customerPhone: rowData.customerPhone,
+                                    paymentMethod: rowData.paymentMethod as 'Cash' | 'Card' | 'Online',
+                                 });
+                                 successfulImports++;
+                             } catch (rowError) {
+                                console.error("Error parsing row:", row, rowError);
+                                failedImports++;
+                             }
+                        });
+                        
+                        if (parsedSales.length > 0) {
+                            importSales(parsedSales);
+                        }
+                        
+                        let alertMessage = `Import complete. ${successfulImports} sales imported successfully.`;
+                        if (failedImports > 0) {
+                            alertMessage += `\n${failedImports} rows failed to import due to formatting errors.`;
+                        }
+                        alert(alertMessage);
+
+                    } catch(error) {
+                        console.error("Error parsing CSV:", error);
+                        alert("Failed to import CSV. Please check the file format.");
+                    } finally {
+                        // Reset file input value and loading state
+                        if(event.target) event.target.value = '';
+                        setIsImporting(false);
                     }
-                    
-                    let alertMessage = `Import complete. ${successfulImports} sales imported successfully.`;
-                    if (failedImports > 0) {
-                        alertMessage += `\n${failedImports} rows failed to import due to formatting errors.`;
-                    }
-                    alert(alertMessage);
-
-                } catch(error) {
-                    console.error("Error parsing CSV:", error);
-                    alert("Failed to import CSV. Please check the file format.");
-                } finally {
-                    // Reset file input value to allow re-uploading the same file
-                    if(event.target) event.target.value = '';
-                }
+                }, 100);
             };
             reader.readAsText(file);
         }
@@ -329,7 +335,14 @@ const ManagerDashboard: React.FC = () => {
                      <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Data Management</h2>
                      <div className="flex flex-col space-y-3">
                          <button onClick={() => setIsExportModalOpen(true)} className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-center">Export as CSV</button>
-                         <button onClick={handleImportClick} className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-center">Import from CSV</button>
+                         <button onClick={handleImportClick} disabled={isImporting} className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-center disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center">
+                            {isImporting ? (
+                                <>
+                                    <SpinnerIcon className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
+                                    Importing...
+                                </>
+                            ) : 'Import from CSV'}
+                         </button>
                          <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".csv" />
                      </div>
                  </div>

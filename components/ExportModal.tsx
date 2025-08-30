@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Sale } from '../types';
+import { SpinnerIcon } from './ui/Icons';
 
 interface ExportModalProps {
     onClose: () => void;
@@ -11,48 +12,61 @@ const ExportModal: React.FC<ExportModalProps> = ({ onClose, allSales, staffMembe
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [staffId, setStaffId] = useState('');
+    const [isExporting, setIsExporting] = useState(false);
 
     const handleExport = () => {
-        const filteredSales = allSales.filter(sale => {
-            const saleDate = new Date(sale.date);
-            const start = startDate ? new Date(startDate) : null;
-            const end = endDate ? new Date(endDate) : null;
+        setIsExporting(true);
 
-            if (start) start.setHours(0, 0, 0, 0);
-            if (end) end.setHours(23, 59, 59, 999);
+        // Timeout to allow UI to render spinner before potential browser freeze on large data
+        setTimeout(() => {
+            try {
+                const filteredSales = allSales.filter(sale => {
+                    const saleDate = new Date(sale.date);
+                    const start = startDate ? new Date(startDate) : null;
+                    const end = endDate ? new Date(endDate) : null;
 
-            if (start && saleDate < start) return false;
-            if (end && saleDate > end) return false;
-            if (staffId && sale.staffId !== staffId) return false;
-            
-            return true;
-        });
+                    if (start) start.setHours(0, 0, 0, 0);
+                    if (end) end.setHours(23, 59, 59, 999);
 
-        if (filteredSales.length === 0) {
-            alert('No sales data matches the selected filters.');
-            return;
-        }
+                    if (start && saleDate < start) return false;
+                    if (end && saleDate > end) return false;
+                    if (staffId && sale.staffId !== staffId) return false;
+                    
+                    return true;
+                });
 
-        const header = ['id', 'items', 'totalAmount', 'date', 'staffId', 'staffEmail', 'customerName', 'customerPhone', 'paymentMethod'].join(',');
-        const rows = filteredSales.map(sale => {
-            const itemsJson = `"${JSON.stringify(sale.items).replace(/"/g, '""')}"`;
-            return [sale.id, itemsJson, sale.totalAmount, sale.date, sale.staffId, sale.staffEmail, sale.customerName, sale.customerPhone || '', sale.paymentMethod].join(',');
-        });
-        const csvContent = [header, ...rows].join('\n');
+                if (filteredSales.length === 0) {
+                    alert('No sales data matches the selected filters.');
+                    setIsExporting(false); // Reset state
+                    return;
+                }
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        if (link.download !== undefined) {
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', 'filtered_sales_export.csv');
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-        
-        onClose();
+                const header = ['id', 'items', 'totalAmount', 'date', 'staffId', 'staffEmail', 'customerName', 'customerPhone', 'paymentMethod'].join(',');
+                const rows = filteredSales.map(sale => {
+                    const itemsJson = `"${JSON.stringify(sale.items).replace(/"/g, '""')}"`;
+                    return [sale.id, itemsJson, sale.totalAmount, sale.date, sale.staffId, sale.staffEmail, sale.customerName, sale.customerPhone || '', sale.paymentMethod].join(',');
+                });
+                const csvContent = [header, ...rows].join('\n');
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                if (link.download !== undefined) {
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', 'filtered_sales_export.csv');
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+                
+                onClose();
+            } catch (error) {
+                console.error("Failed to export:", error);
+                alert("An error occurred during export.");
+                setIsExporting(false); // Reset on error
+            }
+        }, 50);
     };
 
     return (
@@ -85,8 +99,15 @@ const ExportModal: React.FC<ExportModalProps> = ({ onClose, allSales, staffMembe
                     <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-100 dark:bg-gray-600 dark:text-gray-200 dark:border-gray-500 dark:hover:bg-gray-500">
                         Cancel
                     </button>
-                    <button onClick={handleExport} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
-                        Download CSV
+                    <button onClick={handleExport} disabled={isExporting} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center min-w-[130px]">
+                        {isExporting ? (
+                            <>
+                                <SpinnerIcon className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" />
+                                Exporting...
+                            </>
+                        ) : (
+                            'Download CSV'
+                        )}
                     </button>
                 </div>
             </div>

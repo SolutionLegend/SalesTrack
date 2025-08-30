@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AppProvider, useAppContext } from './context/AppContext';
@@ -5,7 +6,8 @@ import HomePage from './pages/HomePage';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
 import { LogoIcon, LogoutIcon, MoonIcon, SunIcon, InstallIcon } from './components/ui/Icons';
-import PwaInstallModal from './components/PwaInstallModal';
+import PwaInstallBanner from './components/PwaInstallBanner';
+import Toast from './components/ui/Toast';
 
 // --- Layout Components ---
 
@@ -72,8 +74,11 @@ const Footer: React.FC = () => {
                     <span className="text-sm text-gray-500 sm:text-center dark:text-gray-400">© 2024 <a href="#" className="hover:underline">Sales Tracker™</a>. All Rights Reserved.
                     </span>
                     <div className="flex mt-4 sm:justify-center sm:mt-0 items-center">
-                       <div className={`flex items-center text-sm ${isOnline ? 'text-green-500' : 'text-gray-500 dark:text-gray-400'}`}>
-                            <span className={`h-2.5 w-2.5 rounded-full mr-2 ${isOnline ? 'bg-green-500' : 'bg-gray-500'}`}></span>
+                       <div className={`flex items-center text-sm font-medium ${isOnline ? 'text-green-500' : 'text-yellow-500'}`}>
+                             <span className="relative flex h-3 w-3 mr-2">
+                                {!isOnline && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>}
+                                <span className={`relative inline-flex rounded-full h-3 w-3 ${isOnline ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
+                            </span>
                             {isOnline ? 'Online' : 'Offline'}
                         </div>
                     </div>
@@ -88,7 +93,7 @@ const Footer: React.FC = () => {
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { isAuthenticated } = useAppContext();
     if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
+        return <Navigate to="/login" />;
     }
     return <>{children}</>;
 };
@@ -117,6 +122,7 @@ function App() {
                         </Routes>
                     </main>
                     <Footer />
+                    <ToastManager />
                 </div>
             </HashRouter>
         </AppProvider>
@@ -125,18 +131,25 @@ function App() {
 
 // A wrapper component is needed because Navbar uses useAppContext, which needs to be inside the provider.
 const NavbarWrapper: React.FC = () => {
-    const { isInstallModalVisible, handleInstallClick, dismissInstallModal } = useAppContext();
+    const { isInstallBannerVisible, handleInstallClick, dismissInstallBanner } = useAppContext();
     return (
         <>
             <Navbar />
-            {isInstallModalVisible && (
-                <PwaInstallModal
+            {isInstallBannerVisible && (
+                <PwaInstallBanner
                     onInstall={handleInstallClick}
-                    onDismiss={dismissInstallModal}
+                    onDismiss={dismissInstallBanner}
                 />
             )}
         </>
     );
 };
+
+const ToastManager: React.FC = () => {
+    const { toast, dismissToast } = useAppContext();
+    if (!toast) return null;
+    return <Toast message={toast.message} type={toast.type} onDismiss={dismissToast} />;
+};
+
 
 export default App;

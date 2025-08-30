@@ -2,7 +2,7 @@ import React, { useState, useMemo, FormEvent, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import ReceiptModal from './ReceiptModal';
 import { Sale, SaleItem } from '../types';
-import { FileTextIcon } from './ui/Icons';
+import { FileTextIcon, SpinnerIcon } from './ui/Icons';
 
 const StaffDashboard: React.FC = () => {
     const { currentUser, sales, addSale } = useAppContext();
@@ -21,6 +21,8 @@ const StaffDashboard: React.FC = () => {
     const [quantity, setQuantity] = useState('1');
     const [unitPrice, setUnitPrice] = useState('');
     const productNameInputRef = useRef<HTMLInputElement>(null);
+    const [isLogging, setIsLogging] = useState(false);
+
 
     const mySales = useMemo(() => {
         return sales
@@ -53,7 +55,7 @@ const StaffDashboard: React.FC = () => {
         setItems(items.filter((_, index) => index !== indexToRemove));
     };
 
-    const handleLogSale = () => {
+    const handleLogSale = async () => {
         if (items.length === 0) {
             alert('Please add at least one item to the sale.');
             return;
@@ -62,11 +64,19 @@ const StaffDashboard: React.FC = () => {
             alert('Please enter a customer name.');
             return;
         }
-        addSale(items, customerName, customerPhone, paymentMethod);
-        setItems([]);
-        setCustomerName('');
-        setCustomerPhone('');
-        setPaymentMethod('Card');
+        setIsLogging(true);
+        try {
+            await addSale(items, customerName, customerPhone, paymentMethod);
+            setItems([]);
+            setCustomerName('');
+            setCustomerPhone('');
+            setPaymentMethod('Card');
+        } catch (error) {
+            console.error("Error logging sale:", error);
+            alert("Failed to log sale. Please try again.");
+        } finally {
+            setIsLogging(false);
+        }
     };
 
 
@@ -196,8 +206,15 @@ const StaffDashboard: React.FC = () => {
                                     </select>
                                 </div>
                             </fieldset>
-                             <button onClick={handleLogSale} className="w-full text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
-                                Log Sale (${currentSaleTotal.toFixed(2)})
+                             <button onClick={handleLogSale} disabled={isLogging} className="w-full text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center">
+                                {isLogging ? (
+                                    <>
+                                        <SpinnerIcon className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
+                                        Logging...
+                                    </>
+                                ) : (
+                                    `Log Sale ($${currentSaleTotal.toFixed(2)})`
+                                )}
                             </button>
                         </div>
                     )}

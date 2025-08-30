@@ -3,6 +3,7 @@ import React, { useState, FormEvent, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { Role } from '../types';
+import { SpinnerIcon } from '../components/ui/Icons';
 
 interface AuthPageProps {
   mode: 'login' | 'signup';
@@ -14,6 +15,8 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode }) => {
   const [role, setRole] = useState<Role>(Role.Staff);
   const { login, signup, isAuthenticated } = useAppContext();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -22,16 +25,24 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode }) => {
   }, [isAuthenticated, navigate]);
 
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (mode === 'login') {
-      if(login(email, password)) {
-        navigate('/dashboard');
+    setIsLoading(true);
+    try {
+      if (mode === 'login') {
+        if (await login(email, password)) {
+          navigate('/dashboard');
+        }
+      } else {
+        if (await signup(email, password, role)) {
+          navigate('/dashboard');
+        }
       }
-    } else {
-      if(signup(email, password, role)) {
-        navigate('/dashboard');
-      }
+    } catch (error) {
+        console.error("Auth error:", error);
+        alert("An unexpected error occurred.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -105,9 +116,17 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode }) => {
 
               <button
                 type="submit"
-                className="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                disabled={isLoading}
+                className="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                {isSignup ? 'Create account' : 'Sign in'}
+                {isLoading ? (
+                  <>
+                    <SpinnerIcon className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
+                    Processing...
+                  </>
+                ) : (
+                  isSignup ? 'Create account' : 'Sign in'
+                )}
               </button>
               <p className="text-sm font-light text-gray-500 dark:text-gray-400">
                 {isSignup ? 'Already have an account? ' : "Don't have an account yet? "}
