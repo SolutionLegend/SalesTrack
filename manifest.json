@@ -3,19 +3,23 @@
   "short_name": "SalesTrack",
   "description": "A frontend-only Sales Tracker application that works both online and offline. It features role-based access for managers and staff, sales analytics, and CSV data management, all powered by React and Tailwind CSS and stored in your browser's local storage.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#f9fafb",
   "theme_color": "#3b82f6",
   "icons": [
     {
       "src": "/icon-192.svg",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     },
     {
       "src": "/icon-512.svg",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }

@@ -1,7 +1,8 @@
-const CACHE_NAME = 'sales-tracker-cache-v2';
+const CACHE_NAME = 'sales-tracker-cache-v4';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
+  '/offline.html',
   '/manifest.json',
   '/icon-192.svg',
   '/icon-512.svg',
@@ -19,13 +20,13 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Opened cache');
-        // Use addAll for atomic operation
         return cache.addAll(URLS_TO_CACHE);
       })
       .catch(error => {
         console.error('Failed to cache resources during install:', error);
       })
   );
+  self.skipWaiting();
 });
 
 self.addEventListener('fetch', event => {
@@ -37,10 +38,8 @@ self.addEventListener('fetch', event => {
           return response;
         }
 
-        // Not in cache - fetch from network, then cache it
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then(
+        // Not in cache - fetch from network
+        return fetch(event.request).then(
           networkResponse => {
             // Check if we received a valid response
             if (!networkResponse || networkResponse.status !== 200) {
@@ -61,9 +60,12 @@ self.addEventListener('fetch', event => {
 
             return networkResponse;
           }
-        ).catch(error => {
-            console.log("Fetch failed; returning offline page instead.", error);
-            // Optionally, return a fallback offline page here if a fetch fails
+        ).catch(() => {
+            // Fetch failed, likely due to being offline.
+            // If this is a navigation request, serve the offline page.
+            if (event.request.mode === 'navigate') {
+              return caches.match('/offline.html');
+            }
         });
       })
   );
@@ -81,6 +83,6 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });
